@@ -70,6 +70,11 @@ int main(int argc, char* argv[]) {
   file = fopen("cstest", "w");
   fclose(file);
 
+  // int* sharedMem = attachMem(MASTER, MEM_SIZE);
+  key_t key = ftok(MASTER, 1);
+  int semId = semget(key, 1, IPC_CREAT);
+
+
   pid_t childPid = 0;
   int status = 0;
 
@@ -89,5 +94,6 @@ int main(int argc, char* argv[]) {
 
   while (wait(&status) > 0);
 
+  semctl(semId, 0, IPC_RMID);
   return 0;
 }

@@ -10,8 +10,6 @@ bool detachMem(int* memory);
 bool destroyMem(char* fileName);
 
 #define MEM_SIZE 4096
-#define CHOOSING "./master"
-#define TICKET "./slave"
-#define CSTEST "./cstest"
+#define MASTER "./master"
 
 #endif // !SHARED_MEMORY_H
