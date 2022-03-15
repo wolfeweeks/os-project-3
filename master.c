@@ -13,10 +13,22 @@
 #include <time.h>
 #include <sys/sem.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include "config.h"
 #include "union.h"
 
+int semId;
+union semun arg;
+
+void anakin(int sig) {
+  semctl(semId, 0, IPC_RMID, arg);
+  kill(0, SIGQUIT);
+}
+
 int main(int argc, char* argv[]) {
+  signal(SIGALRM, anakin);
+  signal(SIGINT, anakin);
+
   int numOfProcs;
   int maxTime = 100;
 
@@ -72,8 +84,6 @@ int main(int argc, char* argv[]) {
 
   // int* sharedMem = attachMem(MASTER, MEM_SIZE);
   key_t key = ftok(MASTER, 1);
-  int semId;
-  union semun arg;
 
   /* create a semaphore set with 1 semaphore: */
   if ((semId = semget(key, 1, IPC_CREAT | S_IRUSR | S_IWUSR)) == -1) {
@@ -107,6 +117,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  alarm(3);
   while (wait(&status) > 0);
 
   semctl(semId, 0, IPC_RMID, arg);
