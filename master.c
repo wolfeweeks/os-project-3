@@ -12,8 +12,8 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <sys/sem.h>
+#include <sys/stat.h>
 #include "config.h"
-#include "sharedMemory.h"
 #include "union.h"
 
 int main(int argc, char* argv[]) {
@@ -72,7 +72,22 @@ int main(int argc, char* argv[]) {
 
   // int* sharedMem = attachMem(MASTER, MEM_SIZE);
   key_t key = ftok(MASTER, 1);
-  int semId = semget(key, 1, IPC_CREAT);
+  int semId;
+  union semun arg;
+
+  /* create a semaphore set with 1 semaphore: */
+  if ((semId = semget(key, 1, IPC_CREAT | S_IRUSR | S_IWUSR)) == -1) {
+    perror("semget");
+    exit(1);
+  }
+  /* initialize semaphore #0 to 1: */
+  arg.val = 1;
+  if (semctl(semId, 0, SETVAL, arg) == -1) {
+    perror("semctl");
+    semctl(semId, 0, IPC_RMID, arg);
+    exit(1);
+  }
+
 
 
   pid_t childPid = 0;
@@ -94,6 +109,6 @@ int main(int argc, char* argv[]) {
 
   while (wait(&status) > 0);
 
-  semctl(semId, 0, IPC_RMID);
+  semctl(semId, 0, IPC_RMID, arg);
   return 0;
 }
